@@ -255,7 +255,7 @@ cross_val_score(never_5_clf, X_train, y_train_5, cv=3, scoring="accuracy")
 
 
 
-
+###Lecture 2 Evaluate performance of a classifier : Confusion matrix
 
 # **Warning**: this output (and many others in this notebook and other notebooks) may differ slightly from those in the book. Don't worry, that's okay! There are several reasons for this:
 # * first, Scikit-Learn and other libraries evolve, and algorithms get tweaked a bit, which may change the exact result you get. If you use the latest Scikit-Learn version (and in general, you really should), you probably won't be using the exact same version I used when I wrote the book or this notebook, hence the difference. I try to keep this notebook reasonably up to date, but I can't change the numbers on the pages in your copy of the book.
@@ -266,7 +266,241 @@ cross_val_score(never_5_clf, X_train, y_train_5, cv=3, scoring="accuracy")
 # ## Confusion Matrix
 
 # In[21]:
+import os
+os.getcwd()    #gettinh current working directory
+work_path="d:\\PythonML"
+os.chdir(work_path)      #setting new working directory
 
+
+# Scikit-Learn ≥0.20 is required
+import sklearn
+
+
+# Common imports
+import numpy as np
+
+# to make this notebook's output stable across runs
+np.random.seed(42)
+
+# To plot pretty figures
+#get_ipython().magic('matplotlib inline')
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+mpl.rc('axes', labelsize=14)
+mpl.rc('xtick', labelsize=12)
+mpl.rc('ytick', labelsize=12)
+
+# Where to save the figures
+PROJECT_ROOT_DIR = "."
+CHAPTER_ID = "classification"
+IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "images", CHAPTER_ID)
+os.makedirs(IMAGES_PATH, exist_ok=True)
+
+def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
+    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
+    print("Saving figure", fig_id)
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)
+
+
+# # MNIST
+
+# **Warning:** since Scikit-Learn 0.24, `fetch_openml()` returns a Pandas `DataFrame` by default. To avoid this and keep the same code as in the book, we use `as_frame=False`.
+
+from sklearn.datasets import fetch_openml
+#mnist = fetch_openml('mnist_784', version=1, as_frame=False)
+mnist = fetch_openml('mnist_784', version=1)
+mnist.keys()
+
+
+X, y = mnist["data"], mnist["target"]
+X.shape
+
+
+# In[4]:
+
+
+y.shape
+
+
+# In[5]:
+
+# In[6]:
+
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+some_digit = X[0]
+some_digit_image = some_digit.reshape(28, 28)
+#plt.imshow(some_digit_image, cmap=mpl.cm.binary)
+#plt.axis("off")
+
+#save_fig("some_digit_plot")
+#plt.show()
+
+
+# In[7]:
+
+
+y[0]
+
+
+# In[8]:
+
+
+y = y.astype(np.uint8)
+
+
+# In[9]:
+
+
+def plot_digit(data):
+    image = data.reshape(28, 28)
+    plt.imshow(image, cmap = mpl.cm.binary,
+               interpolation="nearest")
+    plt.axis("off")
+
+
+# In[10]:
+
+
+# EXTRA
+def plot_digits(instances, images_per_row=10, **options):
+    size = 28
+    images_per_row = min(len(instances), images_per_row)
+    # This is equivalent to n_rows = ceil(len(instances) / images_per_row):
+    n_rows = (len(instances) - 1) // images_per_row + 1
+
+    # Append empty images to fill the end of the grid, if needed:
+    n_empty = n_rows * images_per_row - len(instances)
+    padded_instances = np.concatenate([instances, np.zeros((n_empty, size * size))], axis=0)
+
+    # Reshape the array so it's organized as a grid containing 28×28 images:
+    image_grid = padded_instances.reshape((n_rows, images_per_row, size, size))
+
+    # Combine axes 0 and 2 (vertical image grid axis, and vertical image axis),
+    # and axes 1 and 3 (horizontal axes). We first need to move the axes that we
+    # want to combine next to each other, using transpose(), and only then we
+    # can reshape:
+    big_image = image_grid.transpose(0, 2, 1, 3).reshape(n_rows * size,
+                                                         images_per_row * size)
+    # Now that we have a big image, we just need to show it:
+    plt.imshow(big_image, cmap = mpl.cm.binary, **options)
+    plt.axis("off")
+
+
+# In[11]:
+
+
+plt.figure(figsize=(9,9))
+example_images = X[:100]
+plot_digits(example_images, images_per_row=10)
+save_fig("more_digits_plot")
+plt.show()
+
+
+# In[12]:
+
+
+y[0]
+
+
+# In[13]:
+
+
+X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:]
+
+
+# # Training a Binary Classifier
+
+# In[14]:
+
+
+y_train_5 = (y_train == 5)
+y_test_5 = (y_test == 5)
+
+
+# **Note**: some hyperparameters will have a different defaut value in future versions of Scikit-Learn, such as `max_iter` and `tol`. To be future-proof, we explicitly set these hyperparameters to their future default values. For simplicity, this is not shown in the book.
+
+# In[15]:
+
+
+from sklearn.linear_model import SGDClassifier
+
+sgd_clf = SGDClassifier(max_iter=1000, tol=1e-3, random_state=42)
+sgd_clf.fit(X_train, y_train_5)
+
+
+# In[16]:
+
+
+sgd_clf.predict([some_digit])
+
+
+# In[17]:
+
+
+from sklearn.model_selection import cross_val_score
+cross_val_score(sgd_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+
+
+# # Performance Measures
+
+# ## Measuring Accuracy Using Cross-Validation
+
+# In[18]:
+
+
+from sklearn.model_selection import StratifiedKFold
+from sklearn.base import clone
+
+skfolds = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+for train_index, test_index in skfolds.split(X_train, y_train_5):
+    clone_clf = clone(sgd_clf)
+    X_train_folds = X_train[train_index]
+    y_train_folds = y_train_5[train_index]
+    X_test_fold = X_train[test_index]
+    y_test_fold = y_train_5[test_index]
+
+    clone_clf.fit(X_train_folds, y_train_folds)
+    y_pred = clone_clf.predict(X_test_fold)
+    n_correct = sum(y_pred == y_test_fold)
+    print(n_correct / len(y_pred))
+
+
+
+
+# **Note**: `shuffle=True` was omitted by mistake in previous releases of the book.
+
+# In[19]:
+
+
+from sklearn.base import BaseEstimator
+class Never5Classifier(BaseEstimator):
+    def fit(self, X, y=None):
+        pass
+    def predict(self, X):
+        return np.zeros((len(X), 1), dtype=bool)
+
+
+# In[20]:
+
+
+never_5_clf = Never5Classifier()
+cross_val_score(never_5_clf, X_train, y_train_5, cv=3, scoring="accuracy")
+
+
+
+
+#Just like the cross_val_score() function, cross_val_predict() 
+#performs Kfold cross-validation, but instead of returning the 
+#evaluation scores, it returns the predictions made on each test fold.
+# This means that you get a clean prediction for each instance 
+#in the training set (“clean” meaning that the prediction is made
+#by a model that never saw the data during training).
 
 from sklearn.model_selection import cross_val_predict
 
@@ -442,7 +676,8 @@ threshold_90_precision
 
 
 # In[41]:
-
+#To make predictions (on the training set for now), instead of
+# calling the classifier’s predict() method, you can run this code:
 
 y_train_pred_90 = (y_scores >= threshold_90_precision)
 
@@ -457,6 +692,37 @@ precision_score(y_train_5, y_train_pred_90)
 
 
 recall_score(y_train_5, y_train_pred_90)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ## The ROC Curve
