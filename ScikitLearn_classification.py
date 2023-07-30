@@ -1,4 +1,5 @@
 #Machine learning with Python
+#Classification using Scikit-Learn
 
 # https://www.youtube.com/@easydatascience2508/playlists
 
@@ -725,11 +726,8 @@ recall_score(y_train_5, y_train_pred_90)
 
 
 
-# ## The ROC Curve
-
-# In[44]:
-
-
+# ## Lecture 3. Evaluate performance of a classifier :The ROC Curve
+#to be continued with codes above
 from sklearn.metrics import roc_curve
 
 fpr, tpr, thresholds = roc_curve(y_train_5, y_scores)
@@ -820,7 +818,29 @@ precision_score(y_train_5, y_train_pred_forest)
 recall_score(y_train_5, y_train_pred_forest)
 
 
-# # Multiclass Classification
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Lecture 4. Multiclass Classification
 
 # In[53]:
 
