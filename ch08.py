@@ -742,7 +742,8 @@ for topic_idx, topic in enumerate(lda.components_):
 
 # To confirm that the categories make sense based on the reviews, let's plot 5 movies from the horror movie category (category 6 at index position 5):
 
-
+#X_topics is a matrix for each of 50000 texts belong to
+#each topic, with columns for each probability 
 
 horror = X_topics[:, 5].argsort()[::-1]
 
