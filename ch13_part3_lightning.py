@@ -319,12 +319,10 @@ trainer.test(model=mnistclassifier, datamodule=mnist_dm, ckpt_path='best')
 
 
 #load a trained model and train it for additional epochs
-#does not work
-#path = 'lightning_logs/version_0/checkpoints/epoch=8-step=7739.ckpt'
 
 path = 'lightning_logs/version_0/checkpoints/epoch=17-step=15479.ckpt'
 
-
+### following code are old version, not work
 if torch.cuda.is_available(): # if you have GPUs
     trainer = pl.Trainer(
         max_epochs=25, callbacks=callbacks, resume_from_checkpoint=path, gpus=1
@@ -337,11 +335,22 @@ else:
 trainer.fit(model=mnistclassifier, datamodule=mnist_dm)
 
 
+#for pytorch-lightning 2.4.0, wilson write new following code
+#resume_from_checkpoint changed as ckpt_path and moved to trainer.fit,
+# and gpus deprecated
 
 
+if torch.cuda.is_available(): # if you have GPUs
+    trainer = pl.Trainer(
+        max_epochs=25, callbacks=callbacks
+    )
+else:
+    trainer = pl.Trainer(
+        max_epochs=25, callbacks=callbacks
+    )
 
-
-
+#this lone is written by Wilson
+trainer.fit(model=mnistclassifier, datamodule=mnist_dm, ckpt_path=path)
 
 
 
